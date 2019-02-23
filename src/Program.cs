@@ -23,6 +23,7 @@ namespace DPAPIbridge
             string mode = null;
             string input = null;
             bool show_help = false;
+            DPAPI.KeyType key_type = DPAPI.KeyType.UserKey;
             byte[] inputBytes = new byte[0];
             string outputFile = null;
 
@@ -33,6 +34,7 @@ namespace DPAPIbridge
                 {"i|input=", "Get input data from this argument (rather than stdin)", delegate (string v) {if (v != null) input = v; }},
                 {"b|base64", "Encrypt mode : handle input as base64 encoded data. Decrypt mode : output base64-encoded result. Use it to avoid troubles when clear data contains non ASCII bytes, like binary data.", delegate (string v) {if (v != null) base64 = true; }},
                 {"o|output=", "Send output to file (instead of stdout)", delegate (string v) {if (v != null) outputFile = v; }},
+                {"m|machine", "Use DPAPI machine key (instead of user key)", delegate (string v) {if (v != null) key_type = DPAPI.KeyType.MachineKey; }},
                 { "?|h|help",  "Show this message and exit", v => show_help = v != null },
             };
             List<string> extra;
@@ -101,7 +103,7 @@ namespace DPAPIbridge
             switch (mode)
             {
                 case "encrypt":
-                    Encrypt(inputBytes, base64);
+                    Encrypt(inputBytes, base64, key_type);
                     break;
                 case "decrypt":
                     Decrypt(inputBytes, base64, outputFile);
@@ -117,7 +119,7 @@ namespace DPAPIbridge
          * @param byte[] clearBytes : Clear data to encrypt
          * @param bool base64 : Tells if clearBytes contains base64-encoded data (true) or raw data (false)
          */
-        static void Encrypt(byte[] clearBytes, bool base64)
+        static void Encrypt(byte[] clearBytes, bool base64, DPAPI.KeyType key_type)
         {
             // base64 decode clearBytes
             if (base64)
@@ -136,7 +138,7 @@ namespace DPAPIbridge
 
             // Encryption
             byte[] entropy = null;
-            byte[] encrypted = DPAPI.Encrypt(DPAPI.KeyType.UserKey, clearBytes, entropy, "Encrypted with Windows DPAPI through dpapibridge");
+            byte[] encrypted = DPAPI.Encrypt(key_type, clearBytes, entropy, "Encrypted with Windows DPAPI through dpapibridge");
 
             // Print result
             string encryptedBase64 = Convert.ToBase64String(encrypted);
